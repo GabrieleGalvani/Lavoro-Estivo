@@ -20,12 +20,7 @@ province = gpd.read_file('Province.zip').to_crs(epsg=4326)
 regioni = gpd.read_file('Regioni.zip').to_crs(epsg=4326)
 quartieri = gpd.read_file('quartieri_milano.zip')
 data = pd.read_excel('GdL_GV_2021.xlsx')
-data = gpd.GeoDataFrame(data, geometry=gpd.points_from_xy(data.longitude, data.latitude))
-data['latitude'] = data['geometry'].x
-data['longitude'] = data['geometry'].y
-regionic = regioni[regioni['DEN_REG']== 'Lombardia']
-datac = pd.DataFrame(data[data.intersects(regionic.unary_union)])
-laghi1 = laghi[laghi.intersects(regioni.unary_union)]
+
 
 @app.route('/', methods=['GET'])
 def home():
@@ -50,7 +45,7 @@ def risp():
     return redirect(url_for("mappauser"))
   if request.args['sel'] == 'laghiuser':
     return redirect(url_for("laghiuser"))
-  return render_template(home.html)
+  return render_template('home.html')
 
 
 
@@ -70,6 +65,13 @@ def nluoghigiudizioper():
 def luoghispiaggia():
   data2 = pd.DataFrame(data[data['punto'].str.contains('spiaggia', flags=re.IGNORECASE, regex=True)]['punto'])
   return render_template('result.html' , data2=data2.to_html())
+
+data = gpd.GeoDataFrame(data, geometry=gpd.points_from_xy(data.longitude, data.latitude))
+data['latitude'] = data['geometry'].x
+data['longitude'] = data['geometry'].y
+regionic = regioni[regioni['DEN_REG']== 'Lombardia']
+datac = pd.DataFrame(data[data.intersects(regionic.unary_union)])
+
 
 @app.route('/mappa', methods=['GET'])
 def mappa():
@@ -131,13 +133,14 @@ def resmappauser():
     geo_j.add_to(m)
   return render_template('result.html', map=m._repr_html_())
 
+laghi1 = laghi[laghi.intersects(regioni.unary_union)]
 
 @app.route('/laghiuser', methods=['GET'])
 def laghiuser():
   
   return render_template('laghiuser.html', laghi1=laghi1['LAKE_NAME'])
 
-@app.route('/reslaghiutente', methods=['GET'])
+@app.route('/reslaghiuser', methods=['GET'])
 def reslaghiutente():
 
   m = folium.Map(location=[43.049849, 12.452571],zoom_start=6, tiles='openstreetmap')  
